@@ -225,6 +225,10 @@ def create_parser(input=None):
     manual.add_argument("-u","--url",
     help = 'pass links to download via url',type = check_strhelper,action="extend")
 
+    api=subparser.add_parser("api",help="Manually hit api",parents=[parent_parser])
+    api.add_argument("method", help = 'HTTP method')
+    api.add_argument("url", help = 'Endpoint URL')
+
     return parser
   
     
@@ -263,6 +267,8 @@ def getargs(input=None):
         raise argparse.ArgumentTypeError("error: argument missing --username or --file must be specified )")
     elif args.command in set(["manual"])and not (args.url or args.file):
         raise argparse.ArgumentTypeError("error: argument missing --url or --file must be specified )")
+    elif args.command in set(["api"]) and not (args.method or args.url):
+        raise argparse.ArgumentTypeError("error: method and url positional arguments must be specified )")
     return args
 
 

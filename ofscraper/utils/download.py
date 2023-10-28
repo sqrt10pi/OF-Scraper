@@ -266,13 +266,18 @@ def check_forced_skip(ele,*args):
     elif int(file_size_min)>0 and int(total) < int(file_size_min): 
         log.debug(f"{get_medialog(ele)} under size min") 
         return 'forced_skipped', 1 
+
 async def download(c,ele,model_id,username,progress):
     async with maxfile_sem:
             with paths.set_directory(placeholder.Placeholders().getmediadir(ele,username,model_id)):
+                # async with aiofiles.open(pathlib.Path("./" + str(ele.post.id) + ".json").absolute(), mode="w") as f:
+                #     contents = ele.post.to_json()
+                #     await f.write(contents)
                 if ele.url:
                     return await main_download_helper(c,ele,pathlib.Path(".").absolute(),username,model_id,progress)
                 elif ele.mpd:
                     return await alt_download_helper(c,ele,pathlib.Path(".").absolute(),username,model_id,progress)
+                    
 async def main_download_helper(c,ele,path,username,model_id,progress):
     path_to_file=None
     log.debug(f"{get_medialog(ele)} Downloading with normal downloader")

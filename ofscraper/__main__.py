@@ -1,6 +1,8 @@
 #!/root/OF-Scraper/.venv/bin/python
 import multiprocessing
+import sys
 import ofscraper.start as start
+
 def main():
     start.set_mulitproc_start_type()    
     start.logger.init_queues()

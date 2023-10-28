@@ -1,8 +1,10 @@
+from os import makedirs, path
 import time
 from contextlib import asynccontextmanager
 import asyncio
 import logging
 import httpx
+import ofscraper.classes.placeholder as placeholder
 import ofscraper.utils.separate as seperate
 import ofscraper.db.operations as operations
 import ofscraper.utils.args as args_
@@ -34,14 +36,32 @@ def medialist_filter(medialist,model_id,username):
 
 
 def download_picker(username, model_id, medialist):
-    medialist=medialist_filter(medialist,model_id,username)
+    medialist = medialist_filter(medialist,model_id,username)
+    for ele in medialist:
+        logging.getLogger("shared").info(ele.post.id)
+        directory = path.join(placeholder.Placeholders().getmediadir(ele,username,model_id), "metadata")
+        if not path.exists(directory):
+            makedirs(directory)
+        index = 0
+        while path.exists(path.join(directory, str(ele.post.id) + "_" + str(index) + ".json")):
+            index = index + 1
+        dest = path.join(directory, str(ele.post.id) + "_" + str(index) + ".json")
+        logging.getLogger("shared").info(dest)
+        with open(dest, mode="w") as f:
+            try:
+                contents = ele.post.to_json()
+                f.write(contents)
+            except:
+                logging.getLogger("shared").error("failed to serialize")
+                f.write("failed to serialize")
+
+
     if len(medialist)==0:
         logging.getLogger("shared").error(f'[bold]{username}[/bold] ({0} photos, {0} videos, {0} audios,  {0} skipped, {0} failed)' )
         return  0,0,0,0,0
     elif system.getcpu_count()>1 and (len(medialist)>=config_.get_download_semaphores(config_.read_config())*5) and (args_.getargs().downloadthreads or config_.get_threads(config_.read_config()))>0:
         return batchdownloader.process_dicts(username, model_id, medialist)
     else:
-        
         return download.process_dicts(
                     username,
                     model_id,
@@ -54,8 +74,9 @@ def check_cdm():
         console=console_.get_shared_console()
         log=logging.getLogger("shared")
         keymode=(args_.getargs().key_mode or config_.get_key_mode(config_.read_config()) or "cdrm")
-        if  keymode== "manual":\
-        console.print("[yellow]WARNING:Make sure you have all the correct settings for choosen cdm\nhttps://of-scraper.gitbook.io/of-scraper/cdm-options\n\n[/yellow]");return True
+        if keymode== "manual":
+            log.warn("[yellow]WARNING:Make sure you have all the correct settings for choosen cdm\nhttps://of-scraper.gitbook.io/of-scraper/cdm-options\n\n[/yellow]")
+            return True
         elif keymode=="keydb":url=constants.KEYDB
         elif keymode=="cdrm": url=constants.CDRM
         elif keymode=="cdrm2": url=constants.CDRM2

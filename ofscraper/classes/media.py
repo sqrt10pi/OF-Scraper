@@ -22,6 +22,20 @@ class Media():
         self._count = count
         self._post = post
 
+    def as_seri(self):
+        return {
+            'mediatype': self.mediatype,
+            'length': self.length,
+            'url': self.url,
+            'id': self.id,
+            'canview': self.canview,
+            'label': self.label_,
+            'downloadtype': self.downloadtype,
+            'date': self.date,
+            'text': self.text,
+            'filename': self.filename
+        }
+
     @property
     def expires(self):
         return self._post.expires

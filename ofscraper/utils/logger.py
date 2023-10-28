@@ -285,6 +285,7 @@ def init_parent_logger(name=None,queue_=None):
     # # #log file
       # #discord
     #console
+    # log.setLevel('TRACE')
     sh=RichHandler(rich_tracebacks=True,markup=True,tracebacks_show_locals=True,show_time=False,show_level=False,console=console.get_shared_console())
     sh.setLevel(getLevel(args.getargs().output))
     sh.setFormatter(SensitiveFormatter(format))

@@ -2,6 +2,7 @@ import logging
 import arrow
 import ofscraper.utils.config as config
 import ofscraper.classes.media as Media
+import json
 
 log=logging.getLogger("shared")
 
@@ -12,6 +13,28 @@ class Post():
         self._username = username
         self._responsetype_ = responsetype or post.get("responseType")
         self._label=label
+
+    def to_json(self):
+        return json.dumps({
+            # 'post_media': list(map(lambda x: x.as_seri(), self.post_media)),
+            'label': self.label,
+            'model_id': self.model_id,
+            'username': self.username,
+            'archived': self.archived,
+            'text': self.text,
+            'title': self.title,
+            'responsetype': self.responsetype,
+            'id': self.id,
+            'date': self.date,
+            'value': self.value,
+            'price': self.price,
+            'paid': self.paid,
+            'from_user': self.fromuser,
+            'preview': self.preview,
+            'media': list(map(lambda x: x.as_seri(), self.media)),
+            'expires': self.expires,
+            'mass': self.mass
+        }, sort_keys=True, indent=2)
 
     #All media return from API dict
     @property
