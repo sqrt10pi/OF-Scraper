@@ -1,5 +1,6 @@
 
 import os
+import sys
 import time
 import ssl
 import traceback
@@ -14,6 +15,7 @@ from diskcache import Cache
 import ofscraper.utils.logger as logger
 import ofscraper.utils.args as args_
 import ofscraper.commands.scraper as scraper
+import ofscraper.commands.api as api
 import ofscraper.commands.check as check
 import ofscraper.commands.manual as manual
 import ofscraper.utils.config as config_
@@ -58,9 +60,11 @@ def main():
             check.stories_checker()
         elif args.command=="manual":
             manual.manual_download()
+        elif args.command=="api":
+            api.main()
         else:
             scraper.main()
-        logging.getLogger("shared").error("Finished Script")
+        logging.getLogger("shared").info("Finished Script")
         logging.getLogger("shared").handlers[0].queue.put("None")
         logging.getLogger("shared").handlers[-1].queue.put("None")
   
@@ -149,6 +153,8 @@ def make_folders():
 def startvalues():
     args=args_.getargs()
     log=logger.get_shared_logger()
+    if 'api' in sys.argv:
+        log.setLevel('ERROR')
     logger.updateSenstiveDict(f"/{paths_.get_username()}/","/your_username/")
     logger.updateSenstiveDict(f"\\{paths_.get_username()}\\","\\\\your_username\\\\")
 

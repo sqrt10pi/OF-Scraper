@@ -225,6 +225,10 @@ def create_parser(input=None):
     manual.add_argument("-u","--url",
     help = 'pass links to download via url',type = check_strhelper,action="extend")
 
+    api=subparser.add_parser("api",help="Manually hit api",parents=[parent_parser])
+    api.add_argument("method", help = 'HTTP method')
+    api.add_argument("url", help = 'Endpoint URL')
+
     return parser
   
     
