@@ -178,6 +178,7 @@ def make_headers(auth):
 
 
 def add_cookies():
+    log.info("add_cookies")
 
     authFile=paths.get_auth_file()
     with open(authFile, 'r') as f:
@@ -192,6 +193,7 @@ def add_cookies():
 
     return cookies
 def get_cookies():
+    log.info("get_cookies")
     authFile=paths.get_auth_file()
 
     with open( authFile, 'r') as f:
@@ -203,29 +205,38 @@ def create_sign(link, headers):
     credit: DC and hippothon
     """
     content = read_request_auth()
+    log.info("read_request_auth")
+    log.info(content)
 
     time2 = str(round(time.time() * 1000))
 
+    log.info("time2: %s", time2)
+    log.info("link: %s", link)
     path = urlparse(link).path
     query = urlparse(link).query
     path = path if not query else f"{path}?{query}"
+    log.info("path: %s", path)
 
     static_param = content['static_param']
 
     a = [static_param, time2, path, headers['user-id']]
     msg = "\n".join(a)
+    log.info("msg: %s", msg)
 
     message = msg.encode("utf-8")
     hash_object = hashlib.sha1(message)
     sha_1_sign = hash_object.hexdigest()
+    log.info("sha_1_sign: %s", sha_1_sign)
     sha_1_b = sha_1_sign.encode("ascii")
 
     checksum_indexes = content['checksum_indexes']
     checksum_constant = content['checksum_constant']
     checksum = sum(sha_1_b[i] for i in checksum_indexes) + checksum_constant
 
-    final_sign = content['format'].format(sha_1_sign, abs(checksum))
+    log.info("checksum: %s", checksum)
 
+    final_sign = content['format'].format(sha_1_sign, abs(checksum))
+    log.info("final_sign: %s", final_sign)
 
     headers.update(
         {

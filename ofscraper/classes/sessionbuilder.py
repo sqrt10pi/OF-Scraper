@@ -9,7 +9,7 @@ import functools
 import ofscraper.constants as constants
 from ..utils import auth
 import ofscraper.utils.config as config_
-
+import logging
 
 ####
 #  This class allows the user to select which backend aiohttp or httpx they want to use
@@ -17,6 +17,7 @@ import ofscraper.utils.config as config_
 # 
 #####
 
+log=logging.getLogger("shared")
 
 class sessionBuilder:
     def __init__(self,backend=None, set_header=True,set_sign=True,set_cookies=True,connect_timeout=None,total_timeout=None):
@@ -79,6 +80,8 @@ class sessionBuilder:
     def requests(self,url=None,method="get",headers=None,cookies=None,json=None,params=None,redirects=True,data=None):
         headers=self._create_headers(headers,url)
         cookies=cookies or self._create_cookies()
+        log.info(headers)
+        log.info(cookies)
         json=json or None
         params=params or None
         
