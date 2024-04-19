@@ -1,19 +1,24 @@
 import logging
+
 import arrow
-import ofscraper.utils.config as config
+
+import ofscraper.classes.base as base
 import ofscraper.classes.media as Media
+import ofscraper.utils.config.data as data
 
-log=logging.getLogger("shared")
+log = logging.getLogger("shared")
 
-class Post():
-    def __init__(self, post, model_id, username, responsetype=None,label=None):
+
+class Post(base.base):
+    def __init__(self, post, model_id, username, responsetype=None, label=None):
+        super().__init__()
         self._post = post
         self._model_id = int(model_id)
         self._username = username
-        self._responsetype_ = responsetype or post.get("responseType")
-        self._label=label
+        self._responsetype = responsetype
+        self._label = label
 
-    #All media return from API dict
+    # All media return from API dict
     @property
     def post_media(self):
         return self._post.get("media") or []
@@ -21,10 +26,11 @@ class Post():
     @property
     def label(self):
         return self._label
-    #use for placeholder
+
     @property
-    def label_(self):
-        return self._label if self._label else "None"
+    def label_string(self):
+        return self.label or "None"
+
     @property
     def post(self):
         return self._post
@@ -44,35 +50,61 @@ class Post():
         return 0
 
     @property
+    def pinned(self):
+        if self.post.get("isPinned"):
+            return 1
+        return 0
+
+    @property
+    def favorited(self):
+        return self.post.get("isFavorite")
+
+    @property
+    def opened(self):
+        return self.post.get("isOpened")
+
+    @property
+    def regular_timeline(self):
+        return not self.archived and not self.pinned
+
+    @property
+    def db_sanitized_text(self):
+        string = self.db_cleanup(self.text)
+        return string
+
+    @property
+    def file_sanitized_text(self):
+        string = self.file_cleanup(self.text or self.id)
+        return string
+
+    @property
     def text(self):
         return self._post.get("text")
+
+    # text for posts
+    @property
+    def db_text(self):
+        return self.text if not data.get_sanitizeDB() else self.db_sanitized_text
 
     @property
     def title(self):
         return self._post.get("title")
 
-    # original responsetype for database
-    @property
-    def responsetype_(self):
-        return self._responsetype_
-
     @property
     def responsetype(self):
-        if self.archived:
-            if config.get_archived_responsetype(config.read_config()) == "":
-                return "archived"
-            return config.get_archived_responsetype(config.read_config())
+        if self._responsetype:
+            return self._responsetype
+        elif self.pinned:
+            return "pinned"
+        elif self.archived:
+            return "archived"
+        elif self.post.get("responseType") == "post":
+            return "timeline"
+        return self.post.get("responseType")
 
-        else:
-            #remap some values
-            response=config.read_config().get("responsetype", {}).get(self.responsetype_) 
-
-            if  response == "":
-                return self.responsetype_.capitalize()
-            elif  response == None:
-                return self.responsetype_.capitalize()
-            elif  response != "":
-                return  response.capitalize()
+    @property
+    def modified_responsetype(self):
+        return self.modified_response_helper()
 
     @property
     def id(self):
@@ -80,10 +112,11 @@ class Post():
 
     @property
     def date(self):
-        return self._post.get("createdAt") or self._post.get("postedAt")
-    #modify verison of post date
+        return self._post.get("postedAt") or self._post.get("createdAt")
+
+    # modify verison of post date
     @property
-    def date_(self):
+    def formatted_date(self):
         return arrow.get(self.date).format("YYYY-MM-DD hh:mm:ss")
 
     @property
@@ -95,11 +128,16 @@ class Post():
 
     @property
     def price(self):
-        return float(self.post.get('price') or 0)
+        return float(self.post.get("price") or 0)
 
     @property
     def paid(self):
-        if (self.post.get("isOpen") or self.post.get("isOpened") or len(self.media) > 0 or self.price != 0):
+        if (
+            self.post.get("isOpen")
+            or self.post.get("isOpened")
+            or len(self.media) > 0
+            or self.price != 0
+        ):
             return True
         return False
 
@@ -114,24 +152,53 @@ class Post():
     def preview(self):
         return self._post.get("preview")
 
-    #media object array for media that is unlocked or viewable
+    # media object array for media that is unlocked or viewable
     @property
     def media(self):
-        if (int(self.fromuser) != int(self.model_id)):
+        if int(self.fromuser) != int(self.model_id):
             return []
         else:
-            media = map(lambda x: Media.Media(
-                x[1], x[0], self), enumerate(self.post_media))
+            media = map(
+                lambda x: Media.Media(x[1], x[0], self), enumerate(self.post_media)
+            )
             return list(filter(lambda x: x.canview == True, media))
-    #media object array for all media
+
+    # media object array for all media
     @property
     def all_media(self):
-        return list(map(lambda x: Media.Media(
-            x[1], x[0], self), enumerate(self.post_media)))
+        return list(
+            map(lambda x: Media.Media(x[1], x[0], self), enumerate(self.post_media))
+        )
+
     @property
     def expires(self):
-        return (self._post.get("expiredAt",{}) or self._post.get("expiresAt",None))!=None
-    
+        return (
+            self._post.get("expiredAt", {}) or self._post.get("expiresAt", None)
+        ) != None
+
     @property
     def mass(self):
-        return self._post.get("isFromQueue",None)
+        return self._post.get("isFromQueue", None)
+
+    def modified_response_helper(self, mediatype=None):
+        if self.archived:
+            if not bool(data.get_archived_responsetype(mediatype=mediatype)):
+                return "Archived"
+            return data.get_archived_responsetype(mediatype=mediatype)
+
+        else:
+            # remap some values
+            response_key = self.responsetype
+            response_key = (
+                "timeline"
+                if response_key.lower() in {"post", "posts"}
+                else response_key
+            )
+            response = data.responsetype(mediatype=mediatype).get(response_key)
+
+            if response == "":
+                return self.responsetype.capitalize()
+            elif response == None:
+                return self.responsetype.capitalize()
+            elif response != "":
+                return response.capitalize()

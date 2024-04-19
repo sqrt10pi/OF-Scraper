@@ -1,26 +1,55 @@
+# Releases
+
+[Releases Page](https://pypi.org/project/ofscraper/#history)
+
+```
+Docker and binary releases also availible
+```
+
+## Stable
+
+<div style="display: inline-block">
+<a href="https://pypi.org/project/ofscraper/">
+<img src="https://img.shields.io/pypi/v/ofscraper.svg?color=dark_green&label=Stable-Release" alt="drawing" style="height:75px"/>
+</div>
+</a>
+
+## Dev
+
+<div style="display: inline-block">
+<a href="https://pypi.org/project/ofscraper/3.9.0.dev5/">
+<img src="https://img.shields.io/badge/Pre--Release-v3.90.dev-dark_green.svg" alt="drawing" style="height:75px"/>
+</a>
+</div>
+
 # Table-of-contents
-- [Intro](#intro)
+
+- [Description](#description)
 - [Documentation](#documentation)
 - [Feature Requests](#feature-requests)
 - [Migrating from DC script](#migrating-from-dc-script)
 - [Discord](#discord)
 - [Support](#support)
 
-# Intro
+# Description
 
-A fork of onlyfans-scraper. It has been optimized to make it more feature complete with DIGITALCRIMINALS' onlyfans script.
-A matter of fact with the right settings transitioning between the two scripts should be a easy enough process
+command-line tool that lets you download media from OnlyFans and perform bulk actions including liking or unliking posts.
 
-In addition there are numerous filtering features to control exactly which type of content you want to scrape.
-https://github.com/datawhores/OF-Scraper/blob/main/CHANGES.md
+![CopyQ nsUBdI](https://user-images.githubusercontent.com/67020411/227816586-fb685959-cd3f-45af-adea-14773b7154f9.png)
+
+At its inception, this project emerged as a fork of the original onlyfans-scraper. With invaluable support from the community and consistent script updates, we've undergone substantial architectural changes, resulting in a significantly revamped codebase compared to the original master. While some of these modifications are detailed [HERE](https://github.com/datawhores/OF-Scraper/blob/main/CHANGES.md), most are only documented in the commit history.
+
+This script has been thoughtfully crafted to facilitate seamless transitions from DIGITALCRIMINALS' script, ensuring robust compatibility and smooth feature migration. Furthermore, it boasts an extensive array of filtering features, empowering users with precise control over the specific content types they aim to scrape
 
 # Documentation
-For information on how to 
-- install
-- run
-- and other things you might want to know
 
-https://of-scraper.gitbook.io/of-scraper
+For detailed instructions on:
+
+- Installation
+- Running the tool
+- And other pertinent information you might need
+
+[Official Documention](https://of-scraper.gitbook.io/of-scraper)
 
 <h3>DISCLAIMERS:</h3>
 <ol>
@@ -30,63 +59,45 @@ https://of-scraper.gitbook.io/of-scraper
     <li>
         This is a theoritical program only and is for educational purposes. If you choose to use it then it may or may not work. You solely accept full responsability and indemnify the creator, hostors, contributors and all other involved persons from any any all responsability.
     </li>
-
-
-
-  ## Description:
-  command-line program to download media, and to process other batch operations such as liking and unliking posts.
-    
-
-![CopyQ nsUBdI](https://user-images.githubusercontent.com/67020411/227816586-fb685959-cd3f-45af-adea-14773b7154f9.png)
+</ol>
 
 # Issues
-Open a issue in this repo, or you can mention your issue in the discord
-https://discord.gg/wN7uxEVHRK
 
+Open a issue in this repo, or you can mention your issue in the [Discord](#discord)
 
-    
+## Private Reports
+
+A ticket can be created in the ticket channel
+only you and admins have access to ticket discussions
+
 # Feature Requests
 
-https://ofscraper.clearflask.com/feedback
-    
-Or the discord
-        
+[ClearFlask Feedback](https://ofscraper.clearflask.com/feedback) or [Discord](#discord)
+
 # Migrating from DC script
 
-You will need to change the settings so that the metadata option is compatible with your current folders
-Additionally you might want to set the save_path, dir_path, and filename so they output similar outputs
+To maintain compatibility with your current folders, make sure to modify the metadata option within the config file. Additionally, configure the save_path, dir_path, and filename settings to generate outputs that align with your existing setup.
 
-The metadata path from DIGITALCRIMINALS' script is used for duplicate check so as long as your set the right path.
-Files won't download a second time
+The inherited metadata files from DIGITALCRIMINALS' script play a crucial role in preventing redundant downloads by acting as a check for duplicates.
 
-https://of-scraper.gitbook.io/of-scraper/migrating-from-digitalcriminals-script
+For comprehensive guidance on making these adjustments, you can refer to the provided resources
 
-https://of-scraper.gitbook.io/of-scraper/config-options
-
-https://of-scraper.gitbook.io/of-scraper/config-options/customizing-save-path
+1. [Migration Guide](https://of-scraper.gitbook.io/of-scraper/migrating-from-digitalcriminals-script)
+2. [Config Options](https://of-scraper.gitbook.io/of-scraper/config-options)
+3. [Customize Save Path](https://of-scraper.gitbook.io/of-scraper/config-options/customizing-save-path)
 
 Ask in the discord or open an issue if you need help with what to change to accomplish this
 
-
 # Discord
 
-https://discord.gg/wN7uxEVHRK
-    
+[Discord](https://discord.gg/wN7uxEVHRK)
+
 # Support
+
 buymeacoffee.com/datawhores
-    
+
 BTC: bc1qcnnetrgmtr86rmqvukl2e24f5upghpcsqqsy87
-    
+
 ETH: 0x1d427a6E336edF6D95e589C16cb740A1372F6609
 
-
 [![codecov](https://codecov.io/gh/datawhores/OF-Scraper/branch/main/graph/badge.svg?token=U1F1PQ7LGM)](https://codecov.io/gh/datawhores/OF-Scraper)
-
-
-
-
-
-
-
-
-

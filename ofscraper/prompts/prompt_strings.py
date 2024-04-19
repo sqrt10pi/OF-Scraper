@@ -1,19 +1,18 @@
-CHECKLISTINSTRUCTIONS=\
-"""
+CHECKLISTINSTRUCTIONS = """
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 Instructions
 ============================================================
-Enter one of the  'SELECT_KEYS' to confirm
+Enter one of the  'SELECT KEYS' to confirm
 
 MINUMUM CHOICE: 1
-MAX_CHOICE:1
+MAX CHOICE:1
 ============================================================
 
 KEYS
 ============================================================
 
-   SELECT_KEYS
+   SELECT KEYS
    ======================================================================
    END  |  HOME   | PAGEUP | PAGEDOWN | SPACE | ENTER | shift+right
    ========================================================================
@@ -26,17 +25,12 @@ KEYS
 
 
 ==============================================================
-PRESS ENTER TO CONTINUE
+PRESS ENTER TO RETURN
 
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 """
 
-
-
-
-
-FUZZY_INSTRUCTION=\
-"""
+FUZZY_INSTRUCTION = """
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 Instructions
@@ -47,19 +41,19 @@ Parantheses indicates number of selected user
 
 
 MINUMUM CHOICE: 1
-MAX_CHOICE:ALL
+MAX CHOICE:ALL
 
 =========================================================================
 
 KEYS
 =========================================================================
-  CONFIRM_KEY          
+  CONFIRM KEY          
   ============
   ENTER
   ================
  
  
-   SELECT_KEYS
+   SELECT KEYS
    ================================================
    END  |  HOME | PAGEUP | PAGEDOWN | shift+right
    ================================================
@@ -71,31 +65,28 @@ KEYS
    =================
 
 
-  TOGGLE_ALL_FALSE
+  TOGGLE ALL FALSE
    ========
    CTRL+D
    ========
   
-  TOGGLE_ALL_TRUE
+  TOGGLE ALL TRUE
    ========
    CTRL+S
    ========
 
-   TOGGLE_ALL
+   TOGGLE ALL
    ========
    CTRL+A
    ========
    
 
 ===================================================================
-PRESS ENTER TO CONTINUE
+PRESS ENTER TO RETURN
 
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"""
 
-
-
-MODEL_FUZZY=\
-"""
+MODEL_FUZZY = """
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 Instructions
@@ -106,19 +97,19 @@ Parantheses indicates number of selected user
 
 
 MINUMUM CHOICE: 1
-MAX_CHOICE:ALL
+MAX CHOICE:ALL
 
 =========================================================================
 
 KEYS
 =========================================================================
-  CONFIRM_KEY          
+  CONFIRM KEY          
   ============
   ENTER
   ================
  
  
- SELECT_KEYS
+ SELECT KEYS
    ================================================
    END  |  HOME | PAGEUP | PAGEDOWN | shift+right
    ================================================
@@ -130,88 +121,91 @@ KEYS
  =================
 
 
-  TOGGLE_ALL_FALSE
+  TOGGLE ALL FALSE
    ========
    CTRL+D
    ========
   
-  TOGGLE_ALL_TRUE
+  TOGGLE ALL TRUE
    ========
    CTRL+S
    ========
 
 
-  TOGGLE_ALL
+  TOGGLE ALL
    ========
    CTRL+A
    ========
 
 
-   CHANGE_FILTER/SORT
+   CHANGE FILTER/SORT
    ========
    ALT+X|CTRL+B
    ========
 ===================================================================
-PRESS ENTER TO CONTINUE
+PRESS ENTER TO RETURN
 
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"""
 
-SCRAPE_PAID=\
-"""
+SCRAPE_PAID = """
 This is meant really for scraping content for deleted models
 This can greatly increase the time needed for a single scrape
 
 It should not be needed to turn this on everytime, especially with  frequent scrapes
 
-SHOW INSTRUCTIONS: [ALT+V] or [CTRL+V]
+SHOW KEYBINDINGS AND INSTRUCTIONS: [ALT+V] or [CTRL+V]
 """
 
-
-SINGLE_LINE=\
-"""
+SINGLE_LINE = """
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
 Instructions for submitting text
 =========================================================================
-HIT one of the 'SUBMIT_KEYs' to submit text
+HIT one of the 'SUBMIT KEYs' to submit text
 ===========================================================================
 
 KEYS
 ==========================================================================
 
-   SUBMIT_KEYs
+   SUBMIT KEYs
    ======================================================================
    END  |  HOME   | PAGEUP | PAGEDOWN | SPACE | ENTER | shift+right
    ========================================================================
 
 ==============================================================================
-PRESS ENTER TO CONTINUE
+PRESS ENTER TO RETURN
 
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"""
 
-
-KEY_BOARD=\
+KEY_BOARD = """
+SHOW KEYBINDINGS AND INSTRUCTIONS: [ALT+V] or [CTRL+V]
 """
+
+NUMBER = """
 SHOW INSTRUCTIONS: [ALT+V] or [CTRL+V]
 """
 
-
-NUMBER=\
+MODEL_SELECT = """
+CHANGE SORT/FILTER: [ALT+X] or [CTRL+B]
+MODEL DETAILS: [ALT+D] ||| RANGE SELECT: [ALT+B] 
 """
-SHOW INSTRUCTIONS: [ALT+V] or [CTRL+V]
+PRICE_DETAILS = """
+SHOW CURRENT PRICE STATUS/INFO: [ALT+D]
+"""
+FILTER_DETAILS = """
+SHOW CURRENT FILTERS/SORTING: [ALT+D]
+"""
+LIST_PROMPT_INFO = """
+List are case-insensitive and should be seperate via comma and/or via 'Enter Key'
+Default List are used if input is empty
 """
 
-
-MODEL_SELECT=\
-"""
-SHOW INSTRUCTIONS: [ALT+V] or [CTRL+V]
-CHANGE_SORT/CHANGE_FILTER: [ALT+X] or [CTRL+B]
+SORT_DETAILS = """
+SHOW CURRENT SORTING: [ALT+D]
 """
 
-
-MULTI_LINE=\
-"""
+MULTI_LINE = """
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 Instructions for editing
@@ -221,20 +215,18 @@ HIT one of the 'SUBMIT' combinations when your auth syntax is corrected
 
 KEYS
 ===========================================================================
-   SUBMIT_KEYs
+   SUBMIT
    ==============================================================================
    END+ENTER  |  HOME+ENTER   | PAGEUP+ENTER | PAGEDOWN+ENTER | SPACE+ENTER | ESC
    ================================================================================
 
 ==============================================================================
-PRESS ENTER TO CONTINUE
+PRESS ENTER TO RETURN
 
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 """
 
-
-AUTH_MULTI=\
-"""
+AUTH_MULTI = """
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -246,20 +238,18 @@ HIT one of the 'SUBMIT' combinations to confirm text
 KEYS
 =========================================================================
 
-   SUBMIT_KEYs
+   SUBMIT KEYs
    =============================================================================
    END+ENTER  |  HOME+ENTER   | PAGEUP+ENTER | PAGEDOWN+ENTER | SPACE+ENTER| ESC
    =============================================================================
 
 ==============================================================================
-PRESS ENTER TO CONTINUE
+PRESS ENTER TO RETURN
 
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 """
 
-
-CONFIG_MULTI=\
-"""
+CONFIG_MULTI = """
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 Instructions for editing config
@@ -269,15 +259,15 @@ HIT one of the 'SUBMIT' combinations when your auth syntax is corrected
 
 KEYS
 =========================================================================
-   SUBMIT_KEYs
+   SUBMIT KEYs
    ================================================================================
    END+ENTER  |  HOME+ENTER   | PAGEUP+ENTER | PAGEDOWN+ENTER | SPACE+ENTER | ESC
    ===============================================================================
 
 ==============================================================================
-PRESS ENTER TO CONTINUE
+PRESS ENTER TO RETURN
 
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 """
 
-
+CONFIG_MENU = "CONFIG SECTIONS DETAILS: [ALT+X]"

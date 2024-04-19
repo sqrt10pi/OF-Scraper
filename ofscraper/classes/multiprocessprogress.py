@@ -1,9 +1,5 @@
-import sys
-from typing import (
-    Any,
-    NewType,
-    Optional,
-)
+from typing import Any, NewType, Optional
+
 import rich.progress
 
 TaskID = NewType("TaskID", int)
@@ -12,11 +8,11 @@ TaskID = NewType("TaskID", int)
 class MultiprocessProgress(rich.progress.Progress):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-   
+
     def add_task(
         self,
         description: str,
-        task_id:str,
+        task_id: str,
         start: bool = True,
         total: Optional[float] = 100.0,
         completed: int = 0,
@@ -39,7 +35,7 @@ class MultiprocessProgress(rich.progress.Progress):
             TaskID: An ID you can use when calling `update`.
         """
         with self._lock:
-            task = rich.progress.Task(
+            task = rich.job_progress.Task(
                 task_id,
                 description,
                 total,

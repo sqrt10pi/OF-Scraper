@@ -1,16 +1,15 @@
 #!/root/OF-Scraper/.venv/bin/python
 import multiprocessing
-import ofscraper.start as start
+
+import ofscraper.runner.load as load
+import ofscraper.utils.system.system as system
+
+
 def main():
-    start.set_mulitproc_start_type()    
-    start.logger.init_queues()
-    start.set_eventloop()
-    start.startvalues()
-    start.discord_warning()
-    start.main()
+    if system.get_parent():
+        load.main()
 
-if __name__ == '__main__': 
+
+if __name__ == "__main__":
     multiprocessing.freeze_support()
-
     main()
-

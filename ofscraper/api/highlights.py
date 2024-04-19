@@ -1,284 +1,487 @@
 r"""
                                                              
-        _____                                               
-  _____/ ____\______ ________________    ____   ___________ 
- /  _ \   __\/  ___// ___\_  __ \__  \  /  _ \_/ __ \_  __ \
-(  <_> )  |  \___ \\  \___|  | \// __ \(  <_> )  ___/|  | \/
- \____/|__| /____  >\___  >__|  (____  /\____/ \___  >__|   
-                 \/     \/           \/            \/         
+ _______  _______         _______  _______  _______  _______  _______  _______  _______ 
+(  ___  )(  ____ \       (  ____ \(  ____ \(  ____ )(  ___  )(  ____ )(  ____ \(  ____ )
+| (   ) || (    \/       | (    \/| (    \/| (    )|| (   ) || (    )|| (    \/| (    )|
+| |   | || (__     _____ | (_____ | |      | (____)|| (___) || (____)|| (__    | (____)|
+| |   | ||  __)   (_____)(_____  )| |      |     __)|  ___  ||  _____)|  __)   |     __)
+| |   | || (                   ) || |      | (\ (   | (   ) || (      | (      | (\ (   
+| (___) || )             /\____) || (____/\| ) \ \__| )   ( || )      | (____/\| ) \ \__
+(_______)|/              \_______)(_______/|/   \__/|/     \||/       (_______/|/   \__/
+                                                                                      
 """
 
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
-import logging
 import contextvars
-from tenacity import retry,stop_after_attempt,wait_random,retry_if_not_exception_type
-from rich.progress import Progress
-from rich.progress import (
-    Progress,
-    TextColumn,
-    SpinnerColumn
-)
-from rich.panel import Panel
-from rich.console import Group
-from rich.live import Live
-from rich.style import Style
-import ofscraper.constants as c
-import ofscraper.constants as constants
-import ofscraper.utils.auth as auth
-from ofscraper.classes.semaphoreDelayed import semaphoreDelayed
-import ofscraper.utils.console as console
-import ofscraper.classes.sessionbuilder as sessionbuilder
-from ofscraper.utils.run_async import run
+import logging
+import traceback
 
+import ofscraper.api.common.logs as common_logs
+import ofscraper.classes.sessionmanager as sessionManager
+import ofscraper.utils.constants as constants
+import ofscraper.utils.progress as progress_utils
+from ofscraper.utils.context.run_async import run
 
-log=logging.getLogger("shared")
-sem = semaphoreDelayed(1)
+log = logging.getLogger("shared")
 attempt = contextvars.ContextVar("attempt")
 
+
+#############################################################################
+#### Stories
+####
+##############################################################################
 @run
-async def get_stories_post(model_id):
-    with  ThreadPoolExecutor(max_workers=20) as executor:
-        asyncio.get_event_loop().set_default_executor(executor)
-        overall_progress=Progress(SpinnerColumn(style=Style(color="blue")),TextColumn("Getting story media...\n{task.description}"))
-        job_progress=Progress("{task.description}")
-        progress_group = Group(
-        overall_progress,
-        Panel(Group(job_progress)))
+async def get_stories_post_progress(model_id, c=None):
+    tasks = []
+    job_progress = progress_utils.stories_progress
 
-        output=[]
-        page_count=0
-        global tasks
-        global new_tasks
-        tasks=[]
-        new_tasks=[]
-        with Live(progress_group, refresh_per_second=5,console=console.get_shared_console()):
-                async with sessionbuilder.sessionBuilder() as c:
-                    tasks.append(asyncio.create_task(scrape_stories(c,model_id,job_progress)))
-                    page_task = overall_progress.add_task(f' Pages Progress: {page_count}',visible=True) 
-                    while tasks:
-                        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED) 
-                        for result in done:
-                            try:
-                                result=await result
-                            except Exception as E:
-                                log.debug(E)
-                                continue
-                            page_count=page_count+1
-                            overall_progress.update(page_task,description=f'Pages Progress: {page_count}')
-                            output.extend(result)
-                        tasks = list(pending)
-                        tasks.extend(new_tasks)
-                        new_tasks=[]
-                overall_progress.remove_task(page_task)
-        log.trace("stories raw unduped {posts}".format(posts=  "\n\n".join(list(map(lambda x:f"undupedinfo stories: {str(x)}",output)))))
-        log.debug(f"[bold]stories Count with Dupes[/bold] {len(output)} found")
-        outdict={}
-        for ele in output:
-            outdict[ele["id"]]=ele
-        log.debug(f"[bold]stories Count with Dupes[/bold] {len(list(outdict.values()))} found")
-        return list(outdict.values())
+    tasks.append(
+        asyncio.create_task(scrape_stories(c, model_id, job_progress=job_progress))
+    )
 
+    data = await process_stories_tasks(tasks)
 
-@retry(retry=retry_if_not_exception_type(KeyboardInterrupt),stop=stop_after_attempt(constants.NUM_TRIES),wait=wait_random(min=constants.OF_MIN, max=constants.OF_MAX),reraise=True)   
-async def scrape_stories( c,user_id,job_progress) -> list:
-    global sem
-    global tasks
-    attempt.set(attempt.get(0) + 1)
-    stories=None
-    await sem.acquire()
-    task=job_progress.add_task(f"Attempt {attempt.get()}/{constants.NUM_TRIES} : user id -> {user_id}",visible=True)
-    async with c.requests(url=constants.highlightsWithAStoryEP.format(user_id))() as r:
-        sem.release()
-        if r.ok:
-            attempt.set(0)
-            stories =await r.json_()
-            log.debug(f"stories: -> found stories ids {list(map(lambda x:x.get('id'),stories))}") 
-            log.trace("stories: -> stories raw {posts}".format(posts=  "\n\n".join(list(map(lambda x:f"scrapeinfo stories: {str(x)}",stories)))))
-            job_progress.remove_task(task)
-        else:
-            log.debug(f"[bold]stories response status code:[/bold]{r.status}")
-            log.debug(f"[bold]stories response:[/bold] {await r.text_()}")
-            log.debug(f"[bold]stories headers:[/bold] {r.headers}")
-            r.raise_for_status()
-        return   stories 
-        
-    
-  
-    r
-
-
-
+    progress_utils.stories_layout.visible = False
+    return data
 
 
 @run
-async def get_highlight_post(model_id):
-    with  ThreadPoolExecutor(max_workers=20) as executor:
-        asyncio.get_event_loop().set_default_executor(executor)
-
-        async with sessionbuilder.sessionBuilder() as c:
-            overall_progress=Progress(SpinnerColumn(style=Style(color="blue")),TextColumn("Getting highlight list...\n{task.description}"))
-            job_progress=Progress("{task.description}")
-            progress_group = Group(
-            overall_progress,
-            Panel(Group(job_progress)))
-
-            output=[]
-
-            page_count=0
-            global tasks
-            global new_tasks
-            tasks=[]
-            new_tasks=[] 
-            with Live(progress_group, refresh_per_second=5,console=console.get_shared_console()):
-            
-                    tasks.append(asyncio.create_task(scrape_highlight_list(c,model_id,job_progress)))
-                    page_task = overall_progress.add_task(f' Pages Progress: {page_count}',visible=True) 
-                    while tasks:
-                        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED) 
-                        for result in done:
-                            try:
-                                result=await result
-                            except Exception as E:
-                                log.debug(E)
-                                continue
-                            page_count=page_count+1
-                            overall_progress.update(page_task,description=f'Pages Progress: {page_count}')
-                            output.extend(result)
-                        tasks = list(pending)
-                        tasks.extend(new_tasks)
-                        new_tasks=[]
-                    overall_progress.remove_task(page_task)
-                    
-            
-            overall_progress=Progress(SpinnerColumn(style=Style(color="blue")),TextColumn("Getting highlight...\n{task.description}"))
-            job_progress=Progress("{task.description}")
-            progress_group = Group(
-            overall_progress,
-            Panel(Group(job_progress)))
-            with Live(progress_group, refresh_per_second=5,console=console.get_shared_console()):
+async def get_stories_post(model_id, c=None):
+    tasks = []
+    with progress_utils.set_up_api_stories():
+        tasks.append(
+            asyncio.create_task(
+                scrape_stories(
+                    c, model_id, job_progress=progress_utils.stories_progress
+                )
+            )
+        )
+        return await process_stories_tasks(tasks)
 
 
-                output2=[]
-                page_count=0
-                tasks=[]
-                new_tasks=[]
-                    
-                [tasks.append(asyncio.create_task(scrape_highlights(c,i,job_progress))) for i in output]
-                page_task = overall_progress.add_task(f' Pages Progress: {page_count}',visible=True) 
-                while tasks:
-                    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED) 
-                    for result in done:
-                        try:
-                            result=await result
-                        except Exception as E:
-                            log.debug(E)
-                            continue
-                        page_count=page_count+1
-                        overall_progress.update(page_task,description=f'Pages Progress: {page_count}')
-                        output2.extend(result)
-                    tasks = list(pending)
-                    tasks.extend(new_tasks)
-                    new_tasks=[]
+async def scrape_stories(c, user_id, job_progress=None) -> list:
+    stories = None
+    attempt.set(0)
+    new_tasks = []
+    await asyncio.sleep(1)
+    try:
+        attempt.set(attempt.get(0) + 1)
+        task = (
+            job_progress.add_task(
+                f"Attempt {attempt.get()}/{constants.getattr('API_NUM_TRIES')} : user id -> {user_id}",
+                visible=True,
+            )
+            if job_progress
+            else None
+        )
+        async with c.requests_async(
+            url=constants.getattr("highlightsWithAStoryEP").format(user_id)
+        ) as r:
+            stories = await r.json_()
+            log.debug(
+                f"stories: -> found stories ids {list(map(lambda x:x.get('id'),stories))}"
+            )
+            log.trace(
+                "stories: -> stories raw {posts}".format(
+                    posts="\n\n".join(
+                        list(
+                            map(
+                                lambda x: f"scrapeinfo stories: {str(x)}",
+                                stories,
+                            )
+                        )
+                    )
+                )
+            )
+    except Exception as E:
+        await asyncio.sleep(1)
+        log.traceback_(E)
+        log.traceback_(traceback.format_exc())
+        raise E
 
-            
+    finally:
+        (job_progress.remove_task(task) if job_progress and task is not None else None)
 
-        log.trace("highlight raw unduped {posts}".format(posts=  "\n\n".join(list(map(lambda x:f"undupedinfo heighlight: {str(x)}",output)))))
-        log.debug(f"[bold]highlight Count with Dupes[/bold] {len(output2)} found")
-        outdict={}
-        for ele in output2:
-            outdict[ele["id"]]=ele
-        log.debug(f"[bold]highlight Count with Dupes[/bold] {len(list(outdict.values()))} found")
-        return list(outdict.values())
+    return stories, new_tasks
 
 
+async def process_stories_tasks(tasks):
+    responseArray = []
+    page_count = 0
+    overall_progress = progress_utils.overall_progress
+    page_task = overall_progress.add_task(
+        f"Stories Pages Progress: {page_count}", visible=True
+    )
 
-@retry(retry=retry_if_not_exception_type(KeyboardInterrupt),stop=stop_after_attempt(constants.NUM_TRIES),wait=wait_random(min=constants.OF_MIN, max=constants.OF_MAX),reraise=True)   
-async def scrape_highlight_list( c,user_id,job_progress,offset=0) -> list:
-    global sem
-    global tasks
-    attempt.set(attempt.get(0) + 1)
-    await sem.acquire()
-    task=job_progress.add_task(f"Attempt {attempt.get()}/{constants.NUM_TRIES}",visible=True)
-    async with c.requests(url=constants.highlightsWithStoriesEP.format(user_id,offset))() as r:
-        sem.release()
-        if r.ok:
-            attempt.set(0)
-            resp_data=(await r.json_())
+    seen = set()
+    while tasks:
+        new_tasks = []
+        try:
+            for task in asyncio.as_completed(
+                tasks, timeout=constants.getattr("API_TIMEOUT_PER_TASK")
+            ):
+                try:
+                    result, new_tasks_batch = await task
+                    new_tasks.extend(new_tasks_batch)
+                    page_count = page_count + 1
+                    overall_progress.update(
+                        page_task,
+                        description=f"Stories Content Pages Progress: {page_count}",
+                    )
+                    new_posts = [
+                        post
+                        for post in result
+                        if post["id"] not in seen and not seen.add(post["id"])
+                    ]
+                    log.debug(
+                        f"{common_logs.PROGRESS_IDS.format('Stories')} {list(map(lambda x:x['id'],new_posts))}"
+                    )
+                    log.trace(
+                        f"{common_logs.PROGRESS_RAW.format('Stories')}".format(
+                            posts="\n\n".join(
+                                list(
+                                    map(
+                                        lambda x: f"{common_logs.RAW_INNER} {x}",
+                                        new_posts,
+                                    )
+                                )
+                            )
+                        )
+                    )
+
+                    responseArray.extend(new_posts)
+                except asyncio.TimeoutError:
+                    log.traceback_("Task timed out")
+                    log.traceback_(traceback.format_exc())
+                    [ele.cancel() for ele in tasks]
+                    break
+                except Exception as E:
+                    log.traceback_(E)
+                    log.traceback_(traceback.format_exc())
+                    continue
+        except asyncio.TimeoutError:
+            log.traceback_("Task timed out")
+            log.traceback_(traceback.format_exc())
+            [ele.cancel() for ele in tasks]
+        tasks = new_tasks
+    overall_progress.remove_task(page_task)
+    log.debug(
+        f"{common_logs.FINAL_IDS.format('Stories')} {list(map(lambda x:x['id'],responseArray))}"
+    )
+    log.trace(
+        f"{common_logs.FINAL_RAW.format('Stories')}".format(
+            posts="\n\n".join(
+                list(map(lambda x: f"{common_logs.RAW_INNER} {x}", responseArray))
+            )
+        )
+    )
+    log.debug(f"{common_logs.FINAL_COUNT.format('Stories')} {len(responseArray)}")
+
+    return responseArray
+
+
+##############################################################################
+#### Highlights
+####
+##############################################################################
+
+
+@run
+async def get_highlight_post_progress(model_id, c=None):
+    highlightLists = await get_highlight_list_progress(model_id, c)
+    return await get_highlights_via_list_progress(highlightLists, c)
+
+
+async def get_highlight_list_progress(model_id, c=None):
+    tasks = []
+    tasks.append(
+        asyncio.create_task(
+            scrape_highlight_list(
+                c, model_id, job_progress=progress_utils.highlights_progress
+            )
+        )
+    )
+    return await process_task_get_highlight_list(tasks)
+
+
+async def get_highlights_via_list_progress(highlightLists, c=None):
+    tasks = []
+    [
+        tasks.append(
+            asyncio.create_task(
+                scrape_highlights(c, i, job_progress=progress_utils.highlights_progress)
+            )
+        )
+        for i in highlightLists
+    ]
+    return await process_task_highlights(tasks)
+
+
+@run
+async def get_highlight_post(model_id, c=None):
+    highlightList = await get_highlight_list(model_id, c)
+    return await get_highlights_via_list(highlightList, c)
+
+
+async def get_highlight_list(model_id, c=None):
+    with progress_utils.set_up_api_highlights_lists():
+        tasks = []
+        tasks.append(
+            asyncio.create_task(
+                scrape_highlight_list(
+                    c, model_id, job_progress=progress_utils.highlights_progress
+                )
+            )
+        )
+        return await process_task_get_highlight_list(tasks)
+
+
+async def get_highlights_via_list(highlightLists, c):
+    tasks = []
+    with progress_utils.set_up_api_highlights():
+
+        [
+            tasks.append(
+                asyncio.create_task(
+                    scrape_highlights(
+                        c, i, job_progress=progress_utils.highlights_progress
+                    )
+                )
+            )
+            for i in highlightLists
+        ]
+        return await process_task_highlights(tasks)
+
+
+async def process_task_get_highlight_list(tasks):
+    highlightLists = []
+
+    page_count = 0
+    overall_progress = progress_utils.overall_progress
+
+    page_task = overall_progress.add_task(
+        f"Highlights List Pages Progress: {page_count}", visible=True
+    )
+    seen = set()
+    while tasks:
+        new_tasks = []
+        try:
+            for task in asyncio.as_completed(
+                tasks, timeout=constants.getattr("API_TIMEOUT_PER_TASK")
+            ):
+                try:
+                    result, new_tasks_batch = await task
+                    new_tasks.extend(new_tasks_batch)
+                    page_count = page_count + 1
+                    overall_progress.update(
+                        page_task,
+                        description=f"Highlights List Pages Progress: {page_count}",
+                    )
+                    new_posts = [
+                        post
+                        for post in result
+                        if post not in seen and not seen.add(post)
+                    ]
+                    log.debug(
+                        f"{common_logs.PROGRESS_IDS.format('Highlight List')} {list(map(lambda x:x,new_posts))}"
+                    )
+
+                    highlightLists.extend(new_posts)
+                except asyncio.TimeoutError:
+                    log.traceback_("Task timed out")
+                    log.traceback_(traceback.format_exc())
+                    [ele.cancel() for ele in tasks]
+                    break
+                except Exception as E:
+                    log.traceback_(E)
+                    log.traceback_(traceback.format_exc())
+                    continue
+        except asyncio.TimeoutError:
+            log.traceback_("Task timed out")
+            log.traceback_(traceback.format_exc())
+            [ele.cancel() for ele in tasks]
+        tasks = new_tasks
+
+    overall_progress.remove_task(page_task)
+    log.trace(
+        f"{common_logs.FINAL_IDS.format('Highlight List')} {list(map(lambda x:x,highlightLists))}"
+    )
+    log.debug(
+        f"{common_logs.FINAL_COUNT.format('Highlight List')} {len(highlightLists)}"
+    )
+
+    return highlightLists
+
+
+async def process_task_highlights(tasks):
+    highlightResponse = []
+    page_count = 0
+    overall_progress = progress_utils.overall_progress
+    page_task = overall_progress.add_task(
+        f"Highlight Content via List Pages Progress: {page_count}", visible=True
+    )
+    seen = set()
+    while tasks:
+        new_tasks = []
+        try:
+            for task in asyncio.as_completed(
+                tasks, timeout=constants.getattr("API_TIMEOUT_PER_TASK")
+            ):
+                try:
+                    result, new_tasks_batch = await task
+                    new_tasks.extend(new_tasks_batch)
+                    page_count = page_count + 1
+                    overall_progress.update(
+                        page_task,
+                        description=f"Highlights Content via list Pages Progress: {page_count}",
+                    )
+                    new_posts = [
+                        post
+                        for post in result
+                        if post["id"] not in seen and not seen.add(post["id"])
+                    ]
+                    log.debug(
+                        f"{common_logs.PROGRESS_IDS.format('Highlight List Posts')} {list(map(lambda x:x['id'],new_posts))}"
+                    )
+                    log.trace(
+                        f"{common_logs.PROGRESS_RAW.format('Highlight List Posts')}".format(
+                            posts="\n\n".join(
+                                list(
+                                    map(
+                                        lambda x: f"{common_logs.RAW_INNER} {x}",
+                                        new_posts,
+                                    )
+                                )
+                            )
+                        )
+                    )
+
+                    highlightResponse.extend(new_posts)
+                except asyncio.TimeoutError:
+                    log.traceback_("Task timed out")
+                    log.traceback_(traceback.format_exc())
+                    [ele.cancel() for ele in tasks]
+                    break
+                except Exception as E:
+                    log.traceback_(E)
+                    log.traceback_(traceback.format_exc())
+                    continue
+        except asyncio.TimeoutError:
+            log.traceback_("Task timed out")
+            log.traceback_(traceback.format_exc())
+            [ele.cancel() for ele in tasks]
+        tasks = new_tasks
+        log.debug(
+            f"{common_logs.FINAL_IDS.format('Highlight List Posts')} {list(map(lambda x:x['id'],highlightResponse))}"
+        )
+        log.trace(
+            f"{common_logs.FINAL_RAW.format('Highlight List Posts')}".format(
+                posts="\n\n".join(
+                    list(
+                        map(lambda x: f"{common_logs.RAW_INNER} {x}", highlightResponse)
+                    )
+                )
+            )
+        )
+        log.debug(
+            f"{common_logs.FINAL_COUNT.format('Highlight List Posts')} {len(highlightResponse)}"
+        )
+    return highlightResponse
+
+
+async def scrape_highlight_list(c, user_id, job_progress=None, offset=0) -> list:
+    new_tasks = []
+    await asyncio.sleep(1)
+    try:
+        attempt.set(attempt.get(0) + 1)
+        task = (
+            job_progress.add_task(
+                f"Attempt {attempt.get()}/{constants.getattr('API_NUM_TRIES')} scraping highlight list  offset-> {offset}",
+                visible=True,
+            )
+            if job_progress
+            else None
+        )
+        async with c.requests_async(
+            url=constants.getattr("highlightsWithStoriesEP").format(user_id, offset)
+        ) as r:
+            resp_data = await r.json_()
             log.trace(f"highlights list: -> found highlights list data {resp_data}")
-            data=get_highlightList(resp_data)
+            data = get_highlightList(resp_data)
             log.debug(f"highlights list: -> found list ids {data}")
-    
-        else:
-            log.debug(f"[bold]highlight list response status code:[/bold]{r.status}")
-            log.debug(f"[bold]highlight list response:[/bold] {await r.text_()}")
-            log.debug(f"[bold]highlight list headers:[/bold] {r.headers}")
-    return  data
+
+    except Exception as E:
+        await asyncio.sleep(1)
+        log.traceback_(E)
+        log.traceback_(traceback.format_exc())
+        raise E
+
+    finally:
+        (job_progress.remove_task(task) if job_progress and task != None else None)
+
+    return data, new_tasks
 
 
-
-@retry(retry=retry_if_not_exception_type(KeyboardInterrupt),stop=stop_after_attempt(constants.NUM_TRIES),wait=wait_random(min=constants.OF_MIN, max=constants.OF_MAX),reraise=True)   
-async def scrape_highlights( c,id,job_progress) -> list:
-    global sem
-    global tasks
-    attempt.set(attempt.get(0) + 1)
-    await sem.acquire()
-    task=job_progress.add_task(f"Attempt {attempt.get()}/{constants.NUM_TRIES} highlights id -> {id}",visible=True)
-    async with c.requests(url=constants.storyEP.format(id))() as r:
-        sem.release()
-        if r.ok:
-            attempt.set(0)
-            resp_data=(await r.json_())
+async def scrape_highlights(c, id, job_progress=None) -> list:
+    new_tasks = []
+    await asyncio.sleep(1)
+    try:
+        attempt.set(attempt.get(0) + 1)
+        task = (
+            job_progress.add_task(
+                f"Attempt {attempt.get()}/{constants.getattr('API_NUM_TRIES')} highlights id -> {id}",
+                visible=True,
+            )
+            if job_progress
+            else None
+        )
+        async with c.requests_async(url=constants.getattr("storyEP").format(id)) as r:
+            resp_data = await r.json_()
             log.trace(f"highlights: -> found highlights data {resp_data}")
-            log.debug(f"highlights: -> found ids {list(map(lambda x:x.get('id'),resp_data['stories']))}")
-            job_progress.remove_task(task)
-        else:
-            log.debug(f"[bold]highlight status code:[/bold]{r.status}")
-            log.debug(f"[bold]highlight response:[/bold] {r.text_()}")
-            log.debug(f"[bold]highlight headers:[/bold] {r.headers}")
-    return resp_data['stories']
+            log.debug(
+                f"highlights: -> found ids {list(map(lambda x:x.get('id'),resp_data['stories']))}"
+            )
+    except Exception as E:
+        await asyncio.sleep(1)
+        log.traceback_(E)
+        log.traceback_(traceback.format_exc())
+        raise E
 
+    finally:
+        (job_progress.remove_task(task) if job_progress and task != None else None)
 
+    return resp_data["stories"], new_tasks
 
 
 def get_highlightList(data):
-    for ele in list(filter(lambda x:isinstance(x,list),data.values())):
-        if len(list(filter(lambda x:isinstance(x.get("id"),int) and data.get("hasMore")!=None,ele)))>0:
-               return list(map(lambda x:x.get("id"),ele))
+    for ele in list(filter(lambda x: isinstance(x, list), data.values())):
+        if (
+            len(
+                list(
+                    filter(
+                        lambda x: isinstance(x.get("id"), int)
+                        and data.get("hasMore") != None,
+                        ele,
+                    )
+                )
+            )
+            > 0
+        ):
+            return list(map(lambda x: x.get("id"), ele))
     return []
 
 
-    
+def get_individual_highlights(id):
+    return get_individual_stories(id)
 
 
-
-
-
-
-def get_individual_highlights(id,c=None):
-    return get_individual_stories(id,c)
-    # with c.requests(constants.highlightSPECIFIC.format(id))() as r:
-    #     if r.ok:
-    #         log.trace(f"highlight raw highlight individua; {r.json()}")
-    #         return r.json()
-    #     else:
-    #         log.debug(f"[bold]highlight response status code:[/bold]{r.status}")
-    #         log.debug(f"[bold]highlightresponse:[/bold] {r.text_()}")
-    #         log.debug(f"[bold]highlight headers:[/bold] {r.headers}")
-
-
-
-
-
-
-def get_individual_stories(id,c=None):
-    with c.requests(constants.storiesSPECIFIC.format(id))() as r:
-        if r.ok:
+def get_individual_stories(id, c=None):
+    with sessionManager.sessionManager(
+        backend="httpx",
+        retries=constants.getattr("API_INDVIDIUAL_NUM_TRIES"),
+        wait_min=constants.getattr("OF_MIN_WAIT_API"),
+        wait_max=constants.getattr("OF_MAX_WAIT_API"),
+    ) as c:
+        with c.requests_async(constants.getattr("storiesSPECIFIC").format(id)) as r:
             log.trace(f"highlight raw highlight individua; {r.json_()}")
             return r.json()
-        else:
-            log.debug(f"[bold]highlight response status code:[/bold]{r.status}")
-            log.debug(f"[bold]highlightresponse:[/bold] {r.text_()}")
-            log.debug(f"[bold]highlight headers:[/bold] {r.headers}")
-
-
