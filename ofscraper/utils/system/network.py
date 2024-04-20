@@ -13,12 +13,13 @@ import ofscraper.utils.settings as settings
 
 def check_cdm():
     with stdout.lowstdout():
+        console = console_.get_shared_console()
         log = logging.getLogger("shared")
 
         keymode = settings.get_key_mode()
-        log.warn(f"[yellow]Key Mode: {keymode}\n\n[/yellow]")
+        console.print(f"[yellow]Key Mode: {keymode}\n\n[/yellow]")
         if keymode == "manual":
-            log.warn(
+            console.print(
                 "[yellow]WARNING:Make sure you have all the correct settings for choosen cdm\nhttps://of-scraper.gitbook.io/of-scraper/cdm-options\n\n[/yellow]"
             )
             return True
@@ -38,15 +39,15 @@ def check_cdm():
             ) as c:
                 with c.requests(url=url) as r:
                     if r.ok:
-                        log.warn(
+                        console.print(
                             "[green] CDM service seems to be working\n[/green]"
                         )
-                        log.warn(
+                        console.print(
                             "[yellow]WARNING:Make sure you have all the correct settings for choosen cdm\nhttps://of-scraper.gitbook.io/of-scraper/cdm-options\n\n[/yellow]"
                         )
                         return True
                     else:
-                        log.warn(
+                        console.print(
                             "[red]CDM return an error\nThis may cause a lot of failed downloads\n consider switching\nhttps://of-scraper.gitbook.io/of-scraper/cdm-options\n\n[/red]"
                         )
                         log.debug(f"[bold] cdm status[/bold]: {r.status}")
@@ -55,14 +56,14 @@ def check_cdm():
                         time.sleep(3.5)
                         return False
         except httpx.TimeoutException as E:
-            log.warn(
+            console.print(
                 f"[red]CDM service {keymode} timed out and seems to be down\nThis may cause a lot of failed downloads\nPlease confirm by checking the url:{url}\n Consider switching\nhttps://of-scraper.gitbook.io/of-scraper/cdm-options\n\n[/red]"
             )
             log.debug(traceback.format_exc())
             time.sleep(3.5)
 
         except Exception as E:
-            log.warn(
+            console.print(
                 f"[red]CDM service {keymode} has an issue {E}\nThis may cause a lot of failed downloads\nPlease confirm by checking the url:{url}\n Consider switching\nhttps://of-scraper.gitbook.io/of-scraper/cdm-options\n\n[/red]"
             )
             log.debug(traceback.format_exc())

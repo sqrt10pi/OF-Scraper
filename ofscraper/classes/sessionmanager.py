@@ -15,7 +15,6 @@ import ofscraper.utils.auth.request as auth_requests
 import ofscraper.utils.config.data as data
 import ofscraper.utils.constants as constants
 
-shared_log = logging.getLogger("shared")
 
 class CustomTenacity(AsyncRetrying):
     """
@@ -202,12 +201,10 @@ class sessionManager:
         retries=None,
         wait_min=None,
         wait_max=None,
-        log=shared_log,
+        log=None,
     ):
         headers = self._create_headers(headers, url, sign) if headers is None else None
         cookies = self._create_cookies() if cookies is None else None
-        shared_log.info(headers)
-        shared_log.info(cookies)
         json = json or None
         params = params or None
         r = None
@@ -283,9 +280,6 @@ class sessionManager:
         wait_min_exponential = wait_min_exponential or self._wait_min_exponential
         wait_max_exponential = wait_max_exponential or self._wait_max_exponential
         log = log or self._log
-        log.info("top of requests_async L")
-        shared_log.info("top of requests_async SL")
-        print("\n\n\n\ntop of requests_async\n\n\n\n\n")
         retries = retries or self._retries
         sem = sem or self._sem
         async for _ in CustomTenacity(

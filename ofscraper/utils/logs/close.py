@@ -38,7 +38,7 @@ def daemonClose():
 
 
 def sendCloseMessage():
-    logging.getLogger("shared").info("Finished Script")
+    logging.getLogger("shared").error("Finished Script")
     num_loggers = len(logging.getLogger("shared").handlers)
     if num_loggers > 0:
         logging.getLogger("shared").handlers[0].queue.put("None")
