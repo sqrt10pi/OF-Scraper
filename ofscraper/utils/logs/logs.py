@@ -17,8 +17,6 @@ import ofscraper.utils.system.system as system
 def printStartValues():
     args = read_args.retriveArgs()
     log = logging.getLogger("shared")
-    if 'api' in sys.argv:
-        log.setLevel('ERROR')
     log_helpers.updateSenstiveDict(
         f"/{common_paths.get_username()}/", "/your_username/"
     )

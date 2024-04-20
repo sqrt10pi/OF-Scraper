@@ -134,6 +134,10 @@ def get_request_auth_digitalcriminals():
 
 def make_headers():
     auth = auth_file.read_auth()
+
+    log.info("make_headers app-token")
+    log.info(constants.getattr("APP_TOKEN"))
+
     headers = {
         "accept": "application/json, text/plain, */*",
         "app-token": constants.getattr("APP_TOKEN"),
