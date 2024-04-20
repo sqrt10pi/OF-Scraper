@@ -82,17 +82,17 @@ async def request():
         print("url=", args.get("url"))
         print("method=", args.get("method").lower())
 
-        with c.requests(url = args.get("url"), method = args.get("method").lower) as r:
+        with c.requests(url = args.get("url"), method = args.get("method").lower()) as r:
             print("request completed")
             if r.ok:
                 print("r is ok")
-                body = await r.text_()
+                body = r.text_()
                 print(body)
             else:
                 print("r is not ok")
                 print(json.dumps({
                      '__OF_SCRAPER_STATUS__': 'ERROR',
                      'status': r.status,
-                     'body': await r.text_()
+                     'body': r.text_()
                 }))
                 sys.exit(1)
