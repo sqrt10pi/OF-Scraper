@@ -1,8 +1,8 @@
 import ofscraper.commands.check as check
 import ofscraper.commands.manual as manual
 import ofscraper.commands.scraper as scraper
+import ofscraper.commands.api as api
 import ofscraper.utils.args.read as read_args
-
 
 def pick():
     args = read_args.retriveArgs()
@@ -10,5 +10,7 @@ def pick():
         check.checker()
     elif args.command == "manual":
         manual.manual_download()
+    elif args.command == "api":
+        api.main()
     else:
         scraper.main()

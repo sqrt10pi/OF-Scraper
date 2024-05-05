@@ -1,5 +1,6 @@
 import ofscraper.utils.args.groups.main_args as main
 import ofscraper.utils.args.groups.manual_args as manual
+import ofscraper.utils.args.groups.api_args as api
 import ofscraper.utils.args.groups.message_args as message
 import ofscraper.utils.args.groups.paid_args as paid
 import ofscraper.utils.args.groups.post_args as post
@@ -37,6 +38,7 @@ def parse_args():
         main.program.add_command(story.story_check, "story_check")
         main.program.add_command(paid.paid_check, "paid_check")
         main.program.add_command(post.post_check, "post_check")
+        main.program.add_command(api.api, "api")
 
         result = main.program(standalone_mode=False)
         if result == 0:
